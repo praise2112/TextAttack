@@ -368,25 +368,31 @@ class Attack:
             A ``SuccessfulAttackResult``, ``FailedAttackResult``,
                 or ``MaximizedAttackResult``.
         """
-        final_result = self.search_method(initial_result)
+        num_queries = 0
+        results, queries = self.search_method(initial_result)
+        results = results if isinstance(results, list) else [results]
+        num_queries += queries
         self.clear_cache()
-        if final_result.goal_status == GoalFunctionResultStatus.SUCCEEDED:
-            return SuccessfulAttackResult(
-                initial_result,
-                final_result,
-            )
-        elif final_result.goal_status == GoalFunctionResultStatus.SEARCHING:
-            return FailedAttackResult(
-                initial_result,
-                final_result,
-            )
-        elif final_result.goal_status == GoalFunctionResultStatus.MAXIMIZING:
-            return MaximizedAttackResult(
-                initial_result,
-                final_result,
-            )
-        else:
-            raise ValueError(f"Unrecognized goal status {final_result.goal_status}")
+        final_results = []
+        for result in results:
+            if result.goal_status == GoalFunctionResultStatus.SUCCEEDED:
+                final_results.append(SuccessfulAttackResult(
+                    initial_result,
+                    result,
+                ))
+            elif result.goal_status == GoalFunctionResultStatus.SEARCHING:
+                final_results.append(FailedAttackResult(
+                    initial_result,
+                    result,
+                ))
+            elif result.goal_status == GoalFunctionResultStatus.MAXIMIZING:
+                final_results.append(MaximizedAttackResult(
+                    initial_result,
+                    result,
+                ))
+            else:
+                raise ValueError(f"Unrecognized goal status {result.goal_status}")
+        return final_results
 
     def attack(self, example, ground_truth_output):
         """Attack a single example.

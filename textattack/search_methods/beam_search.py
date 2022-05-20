@@ -4,6 +4,7 @@ Beam Search
 
 """
 import numpy as np
+import math
 
 from textattack.goal_function_results import GoalFunctionResultStatus
 from textattack.search_methods import SearchMethod
@@ -20,13 +21,16 @@ class BeamSearch(SearchMethod):
         beam_width (int): the number of candidates to retain at each step
     """
 
-    def __init__(self, beam_width=8):
+    def __init__(self, beam_width=8, **kwargs):
+        super().__init__(**kwargs)
         self.beam_width = beam_width
 
     def perform_search(self, initial_result):
         beam = [initial_result.attacked_text]
-        best_result = initial_result
-        while not best_result.goal_status == GoalFunctionResultStatus.SUCCEEDED:
+        best_results = []
+        search_over = False
+        while not search_over:
+        # while not best_result.goal_status == GoalFunctionResultStatus.SUCCEEDED:
             potential_next_beam = []
             for text in beam:
                 transformations = self.get_transformations(
@@ -36,19 +40,24 @@ class BeamSearch(SearchMethod):
 
             if len(potential_next_beam) == 0:
                 # If we did not find any possible perturbations, give up.
-                return best_result
+                return best_results or [initial_result]
             results, search_over = self.get_goal_results(potential_next_beam)
-            scores = np.array([r.score for r in results])
-            best_result = results[scores.argmax()]
-            if search_over:
-                return best_result
+            if self.search_all:
+                best_results.extend(
+                    list(filter(lambda x: x.goal_status == GoalFunctionResultStatus.SUCCEEDED, results)))
+            else:
+                scores = np.array([r.score for r in results])
+                best_results = [results[scores.argmax()]]
+                if best_results[0].goal_status == GoalFunctionResultStatus.SUCCEEDED:
+                    return best_results
 
             # Refill the beam. This works by sorting the scores
             # in descending order and filling the beam from there.
             best_indices = (-scores).argsort()[: self.beam_width]
             beam = [potential_next_beam[i] for i in best_indices]
-
-        return best_result
+        if self.search_all and self.sort_results:
+            best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
+        return best_results or [initial_result]
 
     @property
     def is_black_box(self):

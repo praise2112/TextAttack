@@ -17,6 +17,10 @@ class SearchMethod(ABC):
     goal is met or the search is exhausted.
     """
 
+    def __init__(self, search_all=False, sort_results=False):
+        self.search_all = search_all
+        self.sort_results = sort_results
+
     def __call__(self, initial_result):
         """Ensures access to necessary functions, then calls
         ``perform_search``"""
@@ -33,10 +37,10 @@ class SearchMethod(ABC):
                 "Search Method must have access to filter_transformations method"
             )
 
-        result = self.perform_search(initial_result)
+        results = self.perform_search(initial_result)
         # ensure that the number of queries for this GoalFunctionResult is up-to-date
-        result.num_queries = self.goal_function.num_queries
-        return result
+        # results.num_queries = self.goal_function.num_queries
+        return results, self.goal_function.num_queries
 
     @abstractmethod
     def perform_search(self, initial_result):

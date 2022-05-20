@@ -31,7 +31,8 @@ class FileLogger(Logger):
             logger.info(f"Logging to text file at path {filename}")
         else:
             self.fout = filename
-        self.num_results = 0
+        self.num_results = 1
+        self.prev_result = None
 
     def __getstate__(self):
         # Temporarily save file handle b/c we can't copy it
@@ -46,7 +47,10 @@ class FileLogger(Logger):
             self.fout = open(self.filename, "a")
 
     def log_attack_result(self, result):
-        self.num_results += 1
+        if self.prev_result is not None and self.prev_result.original_result != result.original_result:
+            self.num_results += 1
+        self.prev_result = result
+
         # if self.stdout and sys.stdout.isatty():
         self.fout.write(
             "-" * 45 + " Result " + str(self.num_results) + " " + "-" * 45 + "\n"

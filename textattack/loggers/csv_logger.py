@@ -21,13 +21,20 @@ class CSVLogger(Logger):
         self.color_method = color_method
         self.df = pd.DataFrame()
         self._flushed = True
+        self.prev_result = None
+        self.num_results = 1
 
     def log_attack_result(self, result):
+        if self.prev_result is not None and self.prev_result.original_result != result.original_result:
+            self.num_results += 1
+        self.prev_result = result
+
         original_text, perturbed_text = result.diff_color(self.color_method)
         original_text = original_text.replace("\n", AttackedText.SPLIT_TOKEN)
         perturbed_text = perturbed_text.replace("\n", AttackedText.SPLIT_TOKEN)
         result_type = result.__class__.__name__.replace("AttackResult", "")
         row = {
+            "result_index": self.num_results,
             "original_text": original_text,
             "perturbed_text": perturbed_text,
             "original_score": result.original_result.score,

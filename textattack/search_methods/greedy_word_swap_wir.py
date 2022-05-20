@@ -31,7 +31,8 @@ class GreedyWordSwapWIR(SearchMethod):
         model_wrapper: model wrapper used for gradient-based ranking
     """
 
-    def __init__(self, wir_method="unk"):
+    def __init__(self, wir_method="unk", **kwargs):
+        super().__init__(**kwargs)
         self.wir_method = wir_method
 
     def _get_index_order(self, initial_text):
@@ -123,7 +124,7 @@ class GreedyWordSwapWIR(SearchMethod):
 
         i = 0
         cur_result = initial_result
-        results = None
+        best_results = []
         while i < len(index_order) and not search_over:
             transformed_text_candidates = self.get_transformations(
                 cur_result.attacked_text,
@@ -135,11 +136,18 @@ class GreedyWordSwapWIR(SearchMethod):
                 continue
             results, search_over = self.get_goal_results(transformed_text_candidates)
             results = sorted(results, key=lambda x: -x.score)
+
             # Skip swaps which don't improve the score
             if results[0].score > cur_result.score:
                 cur_result = results[0]
             else:
                 continue
+
+            if self.search_all:
+                best_results.extend(
+                    list(filter(lambda x: x.goal_status == GoalFunctionResultStatus.SUCCEEDED, results)))
+                continue
+
             # If we succeeded, return the index with best similarity.
             if cur_result.goal_status == GoalFunctionResultStatus.SUCCEEDED:
                 best_result = cur_result
@@ -160,9 +168,11 @@ class GreedyWordSwapWIR(SearchMethod):
                     if similarity_score > max_similarity:
                         max_similarity = similarity_score
                         best_result = result
-                return best_result
-
-        return cur_result
+                return [best_result]
+        best_results = best_results or [initial_result]
+        if self.search_all and self.sort_results:
+            best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
+        return best_results if self.search_all else cur_result
 
     def check_transformation_compatibility(self, transformation):
         """Since it ranks words by their importance, GreedyWordSwapWIR is

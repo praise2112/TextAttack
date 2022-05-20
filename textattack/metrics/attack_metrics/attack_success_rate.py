@@ -27,8 +27,12 @@ class AttackSuccessRate(Metric):
         """
         self.results = results
         self.total_attacks = len(self.results)
+        prev_result = None
 
-        for i, result in enumerate(self.results):
+        for result in self.results:
+            if prev_result is not None and prev_result.original_result == result.original_result:
+                continue
+            prev_result = result
             if isinstance(result, FailedAttackResult):
                 self.failed_attacks += 1
                 continue

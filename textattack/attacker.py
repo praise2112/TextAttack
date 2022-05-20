@@ -165,13 +165,14 @@ class Attacker:
             if self.dataset.label_names is not None:
                 example.attack_attrs["label_names"] = self.dataset.label_names
             try:
-                result = self.attack.attack(example, ground_truth_output)
+                results = self.attack.attack(example, ground_truth_output)
             except Exception as e:
                 raise e
+            result_type = results[0]
             if (
-                isinstance(result, SkippedAttackResult) and self.attack_args.attack_n
+                isinstance(result_type, SkippedAttackResult) and self.attack_args.attack_n
             ) or (
-                not isinstance(result, SuccessfulAttackResult)
+                not isinstance(result_type, SuccessfulAttackResult)
                 and self.attack_args.num_successful_examples
             ):
                 if worklist_candidates:
@@ -183,17 +184,18 @@ class Attacker:
                         sample_exhaustion_warned = True
             else:
                 pbar.update(1)
+            for result in results:
+                self.attack_log_manager.log_result(result)
 
-            self.attack_log_manager.log_result(result)
             if not self.attack_args.disable_stdout and not self.attack_args.silent:
                 print("\n")
             num_results += 1
 
-            if isinstance(result, SkippedAttackResult):
+            if isinstance(result_type, SkippedAttackResult):
                 num_skipped += 1
-            if isinstance(result, (SuccessfulAttackResult, MaximizedAttackResult)):
+            if isinstance(result_type, (SuccessfulAttackResult, MaximizedAttackResult)):
                 num_successes += 1
-            if isinstance(result, FailedAttackResult):
+            if isinstance(result_type, FailedAttackResult):
                 num_failures += 1
             pbar.set_description(
                 f"[Succeeded / Failed / Skipped / Total] {num_successes} / {num_failures} / {num_skipped} / {num_results}"
