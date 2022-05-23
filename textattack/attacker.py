@@ -166,9 +166,10 @@ class Attacker:
                 example.attack_attrs["label_names"] = self.dataset.label_names
             try:
                 results = self.attack.attack(example, ground_truth_output)
+                results = results if isinstance(results, list) else [results]
             except Exception as e:
                 raise e
-            result_type = results[0]
+            result_type = results
             if (
                 isinstance(result_type, SkippedAttackResult) and self.attack_args.attack_n
             ) or (
