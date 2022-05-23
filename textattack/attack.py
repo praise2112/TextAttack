@@ -381,6 +381,7 @@ class Attack:
                     result,
                 ))
             elif result.goal_status == GoalFunctionResultStatus.SEARCHING:
+                result.num_queries = self.goal_function.num_queries
                 final_results.append(FailedAttackResult(
                     initial_result,
                     result,
