@@ -155,6 +155,7 @@ class Attacker:
             num_successes = 0
 
         sample_exhaustion_warned = False
+        num_queries = None
         while worklist:
             idx = worklist.popleft()
             try:
@@ -165,7 +166,7 @@ class Attacker:
             if self.dataset.label_names is not None:
                 example.attack_attrs["label_names"] = self.dataset.label_names
             try:
-                results = self.attack.attack(example, ground_truth_output)
+                results, num_queries = self.attack.attack(example, ground_truth_output)
                 results = results if isinstance(results, list) else [results]
             except Exception as e:
                 raise e
@@ -226,7 +227,7 @@ class Attacker:
         if self.attack_args.enable_advance_metrics:
             self.attack_log_manager.enable_advance_metrics = True
 
-        self.attack_log_manager.log_summary()
+        self.attack_log_manager.log_summary(num_queries)
         self.attack_log_manager.flush()
         print()
 

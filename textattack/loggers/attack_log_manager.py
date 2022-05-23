@@ -72,7 +72,7 @@ class AttackLogManager:
         ]
         self.log_summary_rows(attack_detail_rows, "Attack Details", "attack_details")
 
-    def log_summary(self):
+    def log_summary(self, num_queries):
         total_attacks = len(self.results)
         if total_attacks == 0:
             return
@@ -116,6 +116,9 @@ class AttackLogManager:
 
         summary_table_rows.append(
             ["Avg num queries:", attack_query_stats["avg_num_queries"]]
+        )
+        summary_table_rows.append(
+            ["num queries:", num_queries]
         )
 
         if self.enable_advance_metrics:

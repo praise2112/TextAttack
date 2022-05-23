@@ -393,7 +393,7 @@ class Attack:
                 ))
             else:
                 raise ValueError(f"Unrecognized goal status {result.goal_status}")
-        return final_results
+        return final_results, num_queries
 
     def attack(self, example, ground_truth_output):
         """Attack a single example.
@@ -424,10 +424,10 @@ class Attack:
             example, ground_truth_output
         )
         if goal_function_result.goal_status == GoalFunctionResultStatus.SKIPPED:
-            return SkippedAttackResult(goal_function_result)
+            return SkippedAttackResult(goal_function_result), 0
         else:
-            result = self._attack(goal_function_result)
-            return result
+            result, num_queries = self._attack(goal_function_result)
+            return result, num_queries
 
     def __repr__(self):
         """Prints attack parameters in a human-readable string.
