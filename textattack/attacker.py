@@ -166,7 +166,8 @@ class Attacker:
             if self.dataset.label_names is not None:
                 example.attack_attrs["label_names"] = self.dataset.label_names
             try:
-                results, num_queries = self.attack.attack(example, ground_truth_output)
+                results, _num_queries = self.attack.attack(example, ground_truth_output)
+                num_queries += _num_queries
                 results = results if isinstance(results, list) else [results]
             except Exception as e:
                 raise e
