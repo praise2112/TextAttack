@@ -172,7 +172,7 @@ class GreedyWordSwapWIR(SearchMethod):
         best_results = best_results or [initial_result]
         if self.search_all and self.sort_results:
             best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
-        return best_results if self.search_all else cur_result
+        return best_results if self.search_all else [cur_result]
 
     def check_transformation_compatibility(self, transformation):
         """Since it ranks words by their importance, GreedyWordSwapWIR is
