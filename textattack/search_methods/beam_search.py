@@ -25,6 +25,15 @@ class BeamSearch(SearchMethod):
         super().__init__(**kwargs)
         self.beam_width = beam_width
 
+    def remove_dup(self, results):
+        new_results = []
+        for result in results:
+            skip = any(result.attacked_text.text == uniq_res.attacked_text.text for uniq_res in new_results)
+            if skip:
+                continue
+            new_results.append(result)
+        return new_results
+
     def perform_search(self, initial_result):
         beam = [initial_result.attacked_text]
         best_results = []
@@ -55,8 +64,10 @@ class BeamSearch(SearchMethod):
             # in descending order and filling the beam from there.
             best_indices = (-scores).argsort()[: self.beam_width]
             beam = [potential_next_beam[i] for i in best_indices]
-        if self.search_all and self.sort_results:
-            best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
+        if self.search_all:
+            best_results = self.remove_dup(best_results)
+            if self.sort_results:
+                best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
         return best_results or [initial_result]
 
     @property

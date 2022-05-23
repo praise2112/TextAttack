@@ -58,6 +58,8 @@ class BeamSearchWithTimeout(BeamSearch):
             best_indices = (-scores).argsort()[: self.beam_width]
             beam = [potential_next_beam[i] for i in best_indices]
 
-        if self.search_all and self.sort_results:
-            best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
+        if self.search_all:
+            best_results = self.remove_dup(best_results)
+            if self.sort_results:
+                best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
         return best_results or [initial_result]

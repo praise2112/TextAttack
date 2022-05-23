@@ -116,6 +116,16 @@ class GreedyWordSwapWIR(SearchMethod):
 
         return index_order, search_over
 
+    def remove_dup(self, results):
+        new_results = []
+        for result in results:
+            skip = any(result.attacked_text.text == uniq_res.attacked_text.text for uniq_res in new_results)
+            if skip:
+                continue
+            new_results.append(result)
+        return new_results
+
+
     def perform_search(self, initial_result):
         attacked_text = initial_result.attacked_text
 
@@ -169,7 +179,7 @@ class GreedyWordSwapWIR(SearchMethod):
                         max_similarity = similarity_score
                         best_result = result
                 return [best_result]
-        best_results = best_results or [initial_result]
+        best_results = self.remove_dup(best_results) or [initial_result]
         if self.search_all and self.sort_results:
             best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
         return best_results if self.search_all else [cur_result]

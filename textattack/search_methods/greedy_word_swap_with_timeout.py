@@ -77,7 +77,7 @@ class GreedyWordSwapWIRWithTimeout(GreedyWordSwapWIR):
                             max_similarity = similarity_score
                             best_result = result
                     return [best_result]
-        best_results = best_results or [initial_result]
+        best_results = self.remove_dup(best_results) or [initial_result]
         if self.search_all and self.sort_results:
             best_results = sorted(best_results, key=lambda x: x.score, reverse=True)
         return best_results if self.search_all else [cur_result]
