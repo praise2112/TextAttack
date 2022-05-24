@@ -155,7 +155,7 @@ class Attacker:
             num_successes = 0
 
         sample_exhaustion_warned = False
-        num_queries = None
+        num_queries = 0
         while worklist:
             idx = worklist.popleft()
             try:
