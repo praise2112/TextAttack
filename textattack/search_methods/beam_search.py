@@ -51,11 +51,11 @@ class BeamSearch(SearchMethod):
                 # If we did not find any possible perturbations, give up.
                 return best_results or [initial_result]
             results, search_over = self.get_goal_results(potential_next_beam)
+            scores = np.array([r.score for r in results])
             if self.search_all:
                 best_results.extend(
                     list(filter(lambda x: x.goal_status == GoalFunctionResultStatus.SUCCEEDED, results)))
             else:
-                scores = np.array([r.score for r in results])
                 best_results = [results[scores.argmax()]]
                 if best_results[0].goal_status == GoalFunctionResultStatus.SUCCEEDED:
                     return best_results
