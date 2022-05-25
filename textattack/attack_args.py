@@ -206,6 +206,7 @@ class AttackArgs:
     disable_stdout: bool = False
     silent: bool = False
     enable_advance_metrics: bool = False
+    max_ptb_result_limit: int = None
 
     def __post_init__(self):
         if self.num_successful_examples:

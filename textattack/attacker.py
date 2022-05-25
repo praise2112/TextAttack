@@ -84,6 +84,7 @@ class Attacker:
         self.attack = attack
         self.dataset = dataset
         self.attack_args = attack_args
+        self.attack.attack_args = attack_args
         self.attack_log_manager = None
 
         # This is to be set if loading from a checkpoint

@@ -371,6 +371,9 @@ class Attack:
         num_queries = 0
         results, queries = self.search_method(initial_result)
         results = results if isinstance(results, list) else [results]
+        limit = self.attack_args.max_ptb_result_limit
+        if limit and len(results) > limit:
+            results = results[:limit]
         num_queries += queries
         self.clear_cache()
         final_results = []
