@@ -22,6 +22,8 @@ class WeightsAndBiasesLogger(Logger):
         self.kwargs = kwargs
         self.project_name = kwargs["project"]
         self._result_table_rows = []
+        self.prev_result = None
+        self.num_results = 1
 
     def __setstate__(self, state):
         global wandb
@@ -50,6 +52,10 @@ class WeightsAndBiasesLogger(Logger):
         wandb.log({"results": wandb.Html(result_table)})
 
     def log_attack_result(self, result):
+        if self.prev_result is not None and self.prev_result.original_result != result.original_result:
+            self.num_results += 1
+        self.prev_result = result
+
         original_text_colored, perturbed_text_colored = result.diff_color(
             color_method="html"
         )
@@ -65,11 +71,18 @@ class WeightsAndBiasesLogger(Logger):
             [[original_text_colored, perturbed_text_colored]]
         )
         result_diff_table = wandb.Html(result_diff_table)
+        result_type = result.__class__.__name__.replace("AttackResult", "")
         wandb.log(
             {
+                "result_index": self.num_results,
                 "result": result_diff_table,
                 "original_output": result.original_result.output,
                 "perturbed_output": result.perturbed_result.output,
+                "original_score": result.original_result.score,
+                "perturbed_score": result.perturbed_result.score,
+                "ground_truth_output": result.original_result.ground_truth_output,
+                "num_queries": result.num_queries,
+                "result_type": result_type,
             }
         )
         self._log_result_table()

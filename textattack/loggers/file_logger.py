@@ -7,6 +7,7 @@ import os
 import sys
 
 import terminaltables
+import pandas as pd
 
 from textattack.shared import logger
 
@@ -16,10 +17,11 @@ from .logger import Logger
 class FileLogger(Logger):
     """Logs the results of an attack to a file, or `stdout`."""
 
-    def __init__(self, filename="", stdout=False, color_method="ansi"):
+    def __init__(self, filename="", stdout=False, color_method="ansi", summary_file_type="txt"):
         self.stdout = stdout
         self.filename = filename
         self.color_method = color_method
+        self.summary_file_type = summary_file_type
         if stdout:
             self.fout = sys.stdout
         elif isinstance(filename, str):
@@ -64,8 +66,11 @@ class FileLogger(Logger):
             table = terminaltables.AsciiTable(table_rows)
             self.fout.write(table.table)
         else:
-            for row in rows:
-                self.fout.write(f"{row[0]} {row[1]}\n")
+            if self.summary_file_type == "txt":
+                for row in rows:
+                    self.fout.write(f"{row[0]} {row[1]}\n")
+            elif self.summary_file_type == "csv":
+                pd.DataFrame(rows).to_csv(self.fout, index=False)
 
     def log_sep(self):
         self.fout.write("-" * 90 + "\n")

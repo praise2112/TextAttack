@@ -13,6 +13,7 @@ import traceback
 
 import torch
 import tqdm
+import time
 
 import textattack
 from textattack.attack_results import (
@@ -108,6 +109,7 @@ class Attacker:
 
         No parallel processing is involved.
         """
+        t = time.monotonic_ns()
         if torch.cuda.is_available():
             self.attack.cuda_()
 
@@ -230,7 +232,8 @@ class Attacker:
         if self.attack_args.enable_advance_metrics:
             self.attack_log_manager.enable_advance_metrics = True
 
-        self.attack_log_manager.log_summary(num_queries)
+        elapsed_time = time.monotonic_ns() - t
+        self.attack_log_manager.log_summary(num_queries, elapsed_time)
         self.attack_log_manager.flush()
         print()
 

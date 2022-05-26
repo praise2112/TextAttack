@@ -72,7 +72,7 @@ class AttackLogManager:
         ]
         self.log_summary_rows(attack_detail_rows, "Attack Details", "attack_details")
 
-    def log_summary(self, num_queries):
+    def log_summary(self, num_queries, elapsed_time):
         total_attacks = len(self.results)
         if total_attacks == 0:
             return
@@ -112,14 +112,9 @@ class AttackLogManager:
                 "Average num. words per input:",
                 words_perturbed_stats["avg_word_perturbed"],
             ],
+            ["Avg num queries:", attack_query_stats["avg_num_queries"]],
+            ["num queries:", num_queries],
         ]
-
-        summary_table_rows.append(
-            ["Avg num queries:", attack_query_stats["avg_num_queries"]]
-        )
-        summary_table_rows.append(
-            ["num queries:", num_queries]
-        )
 
         if self.enable_advance_metrics:
             perplexity_stats = Perplexity().calculate(self.results)
@@ -141,6 +136,7 @@ class AttackLogManager:
             summary_table_rows.append(
                 ["Average Attack USE Score:", use_stats["avg_attack_use_score"]]
             )
+        summary_table_rows.append(["Time Taken(minutes)", round(elapsed_time / (6 * 10**10), 2)])
 
         self.log_summary_rows(
             summary_table_rows, "Attack Results", "attack_results_summary"

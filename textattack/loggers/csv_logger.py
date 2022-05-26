@@ -45,7 +45,7 @@ class CSVLogger(Logger):
             "num_queries": result.num_queries,
             "result_type": result_type,
         }
-        self.df = self.df.append(row, ignore_index=True)
+        self.df = pd.concat([self.df, pd.DataFrame([row])], ignore_index=True)
         self._flushed = False
 
     def flush(self):
