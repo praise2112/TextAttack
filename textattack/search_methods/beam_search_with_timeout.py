@@ -48,10 +48,10 @@ class BeamSearchWithTimeout(BeamSearch):
             else:
                 best_results = [results[scores.argmax()]]
                 if best_results[0].goal_status == GoalFunctionResultStatus.SUCCEEDED:
-                    return best_results
+                    break
             has_timed_out = (time.time() - start) > self.timeout
             if search_over or has_timed_out:
-                return best_results
+                break
 
             # Refill the beam. This works by sorting the scores
             # in descending order and filling the beam from there.

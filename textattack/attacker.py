@@ -235,6 +235,7 @@ class Attacker:
         elapsed_time = time.monotonic_ns() - t
         self.attack_log_manager.log_summary(num_queries, elapsed_time)
         self.attack_log_manager.flush()
+        self.attack.goal_function.clear_cache()
         print()
 
     def _attack_parallel(self):
