@@ -64,9 +64,14 @@ class WeightsAndBiasesLogger(Logger):
             self.num_results += 1
         self.prev_result = result
 
-        original_text_colored, perturbed_text_colored = result.diff_color(
-            color_method="html"
-        )
+        try:
+            original_text_colored, perturbed_text_colored = result.diff_color(
+                color_method="html"
+            )
+        except IndexError:
+            original_text_colored, perturbed_text_colored = result.diff_color(
+                color_method=None
+            )
         result_num = len(self._result_table_rows)
         self._result_table_rows.append(
             [
