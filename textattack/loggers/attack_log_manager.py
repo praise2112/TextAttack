@@ -28,8 +28,6 @@ class AttackLogManager:
         current_batch = []
         for result in self.results:
             current_text = result.original_result.attacked_text.text
-            print(current_text)
-            print(prev_text is None or prev_text == current_text)
             if prev_text is None or prev_text == current_text:
                 current_batch.append(result)
             else:
