@@ -172,7 +172,6 @@ class Attacker:
                 results, _num_queries = self.attack.attack(example, ground_truth_output)
                 num_queries += _num_queries
                 results = results if isinstance(results, list) else [results]
-                print(f"Num of results is {len(results)}")
             except Exception as e:
                 raise e
             result_type = results[0]
