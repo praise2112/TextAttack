@@ -427,7 +427,7 @@ class Attack:
             example, ground_truth_output
         )
         if goal_function_result.goal_status == GoalFunctionResultStatus.SKIPPED:
-            return SkippedAttackResult(goal_function_result), 0
+            return [SkippedAttackResult(goal_function_result)], 0
         else:
             result, num_queries = self._attack(goal_function_result)
             return result, num_queries

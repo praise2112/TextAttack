@@ -21,6 +21,25 @@ class AttackLogManager:
         self.results = []
         self.enable_advance_metrics = False
 
+    @property
+    def batched_results(self):
+        prev_text = None
+        batched_results = []
+        current_batch = []
+        for result in self.results:
+            current_text = result.original_result.attacked_text.text
+            print(current_text)
+            print(prev_text is None or prev_text == current_text)
+            if prev_text is None or prev_text == current_text:
+                current_batch.append(result)
+            else:
+                batched_results.append(current_batch)
+                current_batch = [result]
+            prev_text = result.original_result.attacked_text.text
+        if len(current_batch) > 0:
+            batched_results.append(current_batch)
+        return batched_results
+
     def enable_stdout(self):
         self.loggers.append(FileLogger(stdout=True))
 

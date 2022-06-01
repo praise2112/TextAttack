@@ -156,32 +156,31 @@ class AttackCheckpoint:
     @property
     def results_count(self):
         """Return number of attacks made so far."""
-        return len(self.attack_log_manager.results)
+        return len(self.attack_log_manager.batched_results)
 
     @property
     def num_skipped_attacks(self):
         return sum(
-            isinstance(r, SkippedAttackResult) for r in self.attack_log_manager.results
-        )
+            isinstance(r[0], SkippedAttackResult) for r in self.attack_log_manager.batched_results)
 
     @property
     def num_failed_attacks(self):
         return sum(
-            isinstance(r, FailedAttackResult) for r in self.attack_log_manager.results
+            isinstance(r[0], FailedAttackResult) for r in self.attack_log_manager.batched_results
         )
 
     @property
     def num_successful_attacks(self):
         return sum(
-            isinstance(r, SuccessfulAttackResult)
-            for r in self.attack_log_manager.results
+            isinstance(r[0], SuccessfulAttackResult)
+            for r in self.attack_log_manager.batched_results
         )
 
     @property
     def num_maximized_attacks(self):
         return sum(
-            isinstance(r, MaximizedAttackResult)
-            for r in self.attack_log_manager.results
+            isinstance(r[0], MaximizedAttackResult)
+            for r in self.attack_log_manager.batched_results
         )
 
     @property
@@ -237,5 +236,5 @@ class AttackCheckpoint:
             result.original_text for result in self.attack_log_manager.results
         }
         assert (
-            len(results_set) == self.results_count
+            len(results_set) == len(self.attack_log_manager.results)
         ), "Duplicate `AttackResults` found."

@@ -175,7 +175,7 @@ class Attacker:
                 print(f"Num of results is {len(results)}")
             except Exception as e:
                 raise e
-            result_type = results
+            result_type = results[0]
             if (
                 isinstance(result_type, SkippedAttackResult) and self.attack_args.attack_n
             ) or (
