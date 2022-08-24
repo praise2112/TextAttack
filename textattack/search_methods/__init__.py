@@ -7,10 +7,10 @@ Search methods explore the transformation space in an attempt to find a successf
 """
 from .search_method import SearchMethod
 from .beam_search import BeamSearch
-# from .beam_search_with_timeout import BeamSearchWithTimeout
+from .beam_search_with_timeout import BeamSearchWithTimeout
 from .greedy_search import GreedySearch
 from .greedy_word_swap_wir import GreedyWordSwapWIR
-# from .greedy_word_swap_with_timeout import GreedyWordSwapWIRWithTimeout
+from .greedy_word_swap_with_timeout import GreedyWordSwapWIRWithTimeout
 from .population_based_search import PopulationBasedSearch, PopulationMember
 from .genetic_algorithm import GeneticAlgorithm
 from .alzantot_genetic_algorithm import AlzantotGeneticAlgorithm

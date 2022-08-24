@@ -49,7 +49,11 @@ class Transformation(ABC):
             indices_to_modify = indices_to_modify & constraint(current_text, self)
         transformed_texts = self._get_transformations(current_text, indices_to_modify)
         for text in transformed_texts:
-            text.attack_attrs["last_transformation"] = self
+            if isinstance(text, list):
+                for t in text:
+                    t.attack_attrs["last_transformation"] = self
+            else:
+                text.attack_attrs["last_transformation"] = self
         return transformed_texts
 
     @abstractmethod

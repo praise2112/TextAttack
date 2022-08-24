@@ -23,6 +23,17 @@ from textattack.models.wrappers import ModelWrapper
 from textattack.search_methods import SearchMethod
 from textattack.shared import AttackedText, utils
 from textattack.transformations import CompositeTransformation, Transformation
+from contextlib import contextmanager
+from timeit import default_timer
+
+
+@contextmanager
+def elapsed_timer():
+    start = default_timer()
+    elapser = lambda: default_timer() - start
+    yield lambda: elapser()
+    end = default_timer()
+    elapser = lambda: end - start
 
 
 class Attack:
@@ -149,13 +160,27 @@ class Attack:
 
         # Give search method access to functions for getting transformations and evaluating them
         self.search_method.get_transformations = self.get_transformations
+        self.search_method.get_transformations_batched = self.get_transformations_batched
         # Give search method access to self.goal_function for model query count, etc.
         self.search_method.goal_function = self.goal_function
         # The search method only needs access to the first argument. The second is only used
         # by the attack class when checking whether to skip the sample
-        self.search_method.get_goal_results = self.goal_function.get_results
+        self.search_method.get_goal_results = self.get_goal_func_results
 
         self.search_method.filter_transformations = self.filter_transformations
+
+        self.timers = {
+            "constraints": {C.__class__.__name__: 0 for C in self.constraints},
+            "transformation": 0,
+            "search_method": 0,
+            "goal_function": 0,
+        }
+
+    def get_goal_func_results(self, attacked_text_list, check_skip=False, **kwargs):
+        with elapsed_timer() as elapsed:
+            results = self.goal_function.get_results(attacked_text_list, check_skip, **kwargs)
+            self.timers["goal_function"] += elapsed()
+        return results
 
     def clear_cache(self, recursive=True):
         self.constraints_cache.clear()
@@ -243,11 +268,13 @@ class Attack:
         Returns:
             A filtered list of transformations where each transformation matches the constraints
         """
-        transformed_texts = self.transformation(
-            current_text,
-            pre_transformation_constraints=self.pre_transformation_constraints,
-            **kwargs,
-        )
+        with elapsed_timer() as elapsed:
+            transformed_texts = self.transformation(
+                current_text,
+                pre_transformation_constraints=self.pre_transformation_constraints,
+                **kwargs,
+            )
+            self.timers["transformation"] += elapsed()
 
         return transformed_texts
 
@@ -265,7 +292,6 @@ class Attack:
             raise RuntimeError(
                 "Cannot call `get_transformations` without a transformation."
             )
-
         if self.use_transformation_cache:
             cache_key = tuple([current_text] + sorted(kwargs.items()))
             if utils.hashable(cache_key) and cache_key in self.transformation_cache:
@@ -289,6 +315,45 @@ class Attack:
             transformed_texts, current_text, original_text
         )
 
+    def get_transformations_batched(self, texts, original_text=None, indices_to_modify=None, **kwargs):
+        if indices_to_modify is None:
+            indices_to_modify = []
+        if not self.transformation:
+            raise RuntimeError(
+                "Cannot call `get_transformations` without a transformation."
+            )
+        transformed_texts = []
+        if self.use_transformation_cache:
+            texts_to_get = []
+            for current_text in texts:
+                cache_key = tuple([current_text] + sorted(kwargs.items()))
+                if utils.hashable(cache_key) and cache_key in self.transformation_cache:
+                    # promote transformed_text to the top of the LRU cache
+                    self.transformation_cache[cache_key] = self.transformation_cache[
+                        cache_key
+                    ]
+                    transformed_texts.append(list(self.transformation_cache[cache_key]))
+                else:
+                    texts_to_get.append(current_text)
+            transformed_texts = self._get_transformations_uncached(
+                texts_to_get, original_text, indices_to_modify=indices_to_modify, **kwargs
+            )
+            for current_text, transformed_text in zip(texts_to_get, transformed_texts):
+                cache_key = tuple([current_text] + sorted(kwargs.items()))
+                self.transformation_cache[cache_key] = tuple(transformed_text)
+                if utils.hashable(cache_key):
+                    self.transformation_cache[cache_key] = tuple(transformed_texts)
+        else:
+            transformed_texts = self._get_transformations_uncached(
+                texts, original_text, indices_to_modify=indices_to_modify, **kwargs
+            )
+        filtered_texts = []
+        for transformed_texts, current_text in zip(transformed_texts, texts):
+            filtered_texts.extend(self.filter_transformations(
+                transformed_texts, current_text, original_text
+            ))
+        return filtered_texts
+
     def _filter_transformations_uncached(
         self, transformed_texts, current_text, original_text=None
     ):
@@ -302,17 +367,19 @@ class Attack:
         """
         filtered_texts = transformed_texts[:]
         for C in self.constraints:
-            if len(filtered_texts) == 0:
-                break
-            if C.compare_against_original:
-                if not original_text:
-                    raise ValueError(
-                        f"Missing `original_text` argument when constraint {type(C)} is set to compare against `original_text`"
-                    )
+            with elapsed_timer() as elapsed:
+                if len(filtered_texts) == 0:
+                    break
+                if C.compare_against_original:
+                    if not original_text:
+                        raise ValueError(
+                            f"Missing `original_text` argument when constraint {type(C)} is set to compare against `original_text`"
+                        )
 
-                filtered_texts = C.call_many(filtered_texts, original_text)
-            else:
-                filtered_texts = C.call_many(filtered_texts, current_text)
+                    filtered_texts = C.call_many(filtered_texts, original_text)
+                else:
+                    filtered_texts = C.call_many(filtered_texts, current_text)
+                self.timers["constraints"][C.__class__.__name__] += elapsed()
         # Default to false for all original transformations.
         for original_transformed_text in transformed_texts:
             self.constraints_cache[(current_text, original_transformed_text)] = False
@@ -369,7 +436,9 @@ class Attack:
                 or ``MaximizedAttackResult``.
         """
         num_queries = 0
-        results, queries = self.search_method(initial_result)
+        with elapsed_timer() as elapsed:
+            results, queries = self.search_method(initial_result)
+            self.timers["search_method"] += elapsed()
         results = results if isinstance(results, list) else [results]
         limit = self.attack_args.max_ptb_result_limit
         if limit and len(results) > limit:

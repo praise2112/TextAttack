@@ -89,11 +89,10 @@ class AttackLogManager:
         ]
         self.log_summary_rows(attack_detail_rows, "Attack Details", "attack_details")
 
-    def log_summary(self, num_queries, elapsed_time):
+    def log_summary(self,  num_queries, elapsed_time):
         total_attacks = len(self.results)
         if total_attacks == 0:
             return
-
         # Default metrics - calculated on every attack
         attack_success_stats = AttackSuccessRate().calculate(self.results)
         words_perturbed_stats = WordsPerturbed().calculate(self.results)
@@ -103,6 +102,10 @@ class AttackLogManager:
         # Example to demonstrate:
         # summary_table_rows = attack_success_stats.display_row() + words_perturbed_stats.display_row() + ...
         summary_table_rows = [
+            [
+                "Number of successful perturbations:",
+                attack_success_stats["successful_peturbs"],
+            ],
             [
                 "Number of successful attacks:",
                 attack_success_stats["successful_attacks"],
@@ -129,8 +132,8 @@ class AttackLogManager:
                 "Average num. words per input:",
                 words_perturbed_stats["avg_word_perturbed"],
             ],
-            ["Avg num queries:", attack_query_stats["avg_num_queries"]],
-            ["num queries:", num_queries],
+            ["Avg num queries per sentence:", attack_query_stats["avg_num_queries"]],
+            ["Total num of queries:", num_queries],
         ]
 
         if self.enable_advance_metrics:
@@ -154,7 +157,7 @@ class AttackLogManager:
                 ["Average Attack USE Score:", use_stats["avg_attack_use_score"]]
             )
         summary_table_rows.append(["Time Taken(minutes)", round(elapsed_time / (6 * 10**10), 2)])
-
+        summary_table_rows.append(["Time Taken(seconds)", round(elapsed_time / 1e9, 2)])
         self.log_summary_rows(
             summary_table_rows, "Attack Results", "attack_results_summary"
         )

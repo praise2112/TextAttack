@@ -5,7 +5,7 @@ Metrics on AttackSuccessRate
 
 """
 
-from textattack.attack_results import FailedAttackResult, SkippedAttackResult
+from textattack.attack_results import FailedAttackResult, SkippedAttackResult, SuccessfulAttackResult
 from textattack.metrics import Metric
 
 
@@ -14,6 +14,7 @@ class AttackSuccessRate(Metric):
         self.failed_attacks = 0
         self.skipped_attacks = 0
         self.successful_attacks = 0
+        self.successful_peturbs = 0
 
         self.all_metrics = {}
 
@@ -31,6 +32,8 @@ class AttackSuccessRate(Metric):
 
         for result in self.results:
             if prev_result is not None and prev_result.original_result == result.original_result:
+                if isinstance(result, SuccessfulAttackResult):
+                    self.successful_peturbs += 1
                 continue
             prev_result = result
             if isinstance(result, FailedAttackResult):
@@ -46,6 +49,7 @@ class AttackSuccessRate(Metric):
         self.all_metrics["successful_attacks"] = self.successful_attacks
         self.all_metrics["failed_attacks"] = self.failed_attacks
         self.all_metrics["skipped_attacks"] = self.skipped_attacks
+        self.all_metrics["successful_peturbs"] = self.successful_peturbs + self.successful_attacks
 
         # Percentages wrt the calculations
         self.all_metrics["original_accuracy"] = self.original_accuracy_perc()
