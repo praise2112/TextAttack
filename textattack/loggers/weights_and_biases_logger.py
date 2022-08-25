@@ -13,14 +13,13 @@ class WeightsAndBiasesLogger(Logger):
     """Logs attack results to Weights & Biases."""
 
     def __init__(self, **kwargs):
-        assert "project" in kwargs
 
         global wandb
         wandb = LazyLoader("wandb", globals(), "wandb")
 
         wandb.init(**kwargs)
         self.kwargs = kwargs
-        self.project_name = kwargs["project"]
+        self.project_name = wandb.run.project_name()
         self._result_table_rows = []
         self.prev_result = None
         self.num_results = 1
@@ -42,7 +41,6 @@ class WeightsAndBiasesLogger(Logger):
                 except ValueError as e:
                     raise ValueError(
                         f'Unable to convert row value "{row[1]}" for Attack Result "{row[0]}" into float') from e
-
             table.add_data(*row)
             metric_name, metric_score = row
             wandb.run.summary[metric_name] = metric_score

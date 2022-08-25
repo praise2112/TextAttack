@@ -27,7 +27,7 @@ class AttackSuccessRate(Metric):
                 Attack results for each instance in dataset
         """
         self.results = results
-        self.total_attacks = len(self.results)
+        self.total_attacks = 0
         prev_result = None
 
         for result in self.results:
@@ -36,6 +36,7 @@ class AttackSuccessRate(Metric):
                     self.successful_peturbs += 1
                 continue
             prev_result = result
+            self.total_attacks += 1
             if isinstance(result, FailedAttackResult):
                 self.failed_attacks += 1
                 continue

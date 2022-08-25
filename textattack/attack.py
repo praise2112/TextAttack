@@ -92,8 +92,8 @@ class Attack:
         constraints: List[Union[Constraint, PreTransformationConstraint]],
         transformation: Transformation,
         search_method: SearchMethod,
-        transformation_cache_size=2 ** 15,
-        constraint_cache_size=2 ** 15,
+        transformation_cache_size=2**15,
+        constraint_cache_size=2**15,
     ):
         """Initialize an attack object.
 
@@ -166,6 +166,9 @@ class Attack:
         # The search method only needs access to the first argument. The second is only used
         # by the attack class when checking whether to skip the sample
         self.search_method.get_goal_results = self.get_goal_func_results
+
+        # Give search method access to get indices which need to be ordered / searched
+        self.search_method.get_indices_to_order = self.get_indices_to_order
 
         self.search_method.filter_transformations = self.filter_transformations
 
@@ -257,6 +260,28 @@ class Attack:
                         to_cuda(item)
 
         to_cuda(self)
+
+    def get_indices_to_order(self, current_text, **kwargs):
+        """Applies ``pre_transformation_constraints`` to ``text`` to get all
+        the indices that can be used to search and order.
+
+        Args:
+            current_text: The current ``AttackedText`` for which we need to find indices are eligible to be ordered.
+        Returns:
+            The length and the filtered list of indices which search methods can use to search/order.
+        """
+
+        indices_to_order = self.transformation(
+            current_text,
+            pre_transformation_constraints=self.pre_transformation_constraints,
+            return_indices=True,
+            **kwargs,
+        )
+
+        len_text = len(indices_to_order)
+
+        # Convert indices_to_order to list for easier shuffling later
+        return len_text, list(indices_to_order)
 
     def _get_transformations_uncached(self, current_text, original_text=None, **kwargs):
         """Applies ``self.transformation`` to ``text``, then filters the list
